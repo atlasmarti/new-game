@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Color Catcher Game</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game-container">
+    <div id="player"></div>
+    <div id="score">Score: 0</div>
+    <div id="game-over" style="display: none;">Game Over</div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #f0f0f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+#game-container {
+  width: 400px;
+  height: 600px;
+  border: 2px solid black;
+  position: relative;
+  overflow: hidden;
+  background-color: white;
+}
+
+#player {
+  width: 50px;
+  height: 50px;
+  position: absolute;
+  bottom: 0;
+  background-color: red;
+  border-radius: 5px;
+}
+
+.falling-block {
+  width: 30px;
+  height: 30px;
+  position: absolute;
+  top: 0;
+  border-radius: 5px;
+}
+
+#score {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 18px;
+}
+
+#game-over {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 32px;
+  font-weight: bold;
+  color: red;
+}
+const player = document.getElementById('player');
+const scoreDisplay = document.getElementById('score');
+const gameOverDisplay = document.getElementById('game-over');
+const gameContainer = document.getElementById('game-container');
+
+let score = 0;
+let playerColor = 'red';
+let gameInterval;
+let blockInterval;
+
+function startGame() {
+  gameOverDisplay.style.display = 'none';
+  score = 0;
+  playerColor = 'red';
+  scoreDisplay.textContent = 'Score: ' + score;
+  
+  document.addEventListener('keydown', movePlayer);
+  gameInterval = setInterval(gameLoop, 20);
+  blockInterval = setInterval(createFallingBlock, 1000);
+}
+
+function movePlayer(event) {
+  const playerRect = player.getBoundingClientRect();
+  const containerRect = gameContainer.getBoundingClientRect();
+
+  if (event.key === 'ArrowLeft' && playerRect.left > containerRect.left) {
+    player.style.left = `${player.offsetLeft - 10}px`;
+  } else if (event.key === 'ArrowRight' && playerRect.right < containerRect.right) {
+    player.style.left = `${player.offsetLeft + 10}px`;
+  }
+}
+
+function createFallingBlock() {
+  const block = document.createElement('div');
+  block.classList.add('falling-block');
+  block.style.backgroundColor = getRandomColor();
+  block.style.left = `${Math.random() * (gameContainer.offsetWidth - 30)}px`;
+  gameContainer.appendChild(block);
+  
+  let blockPos = 0;
+  const fallInterval = setInterval(() => {
+    blockPos += 5;
+    block.style.top = `${blockPos}px`;
+
+    if (blockPos > gameContainer.offsetHeight) {
+      clearInterval(fallInterval);
+      block.remove();
+    } else if (checkCollision(block)) {
+      score++;
+      scoreDisplay.textContent = 'Score: ' + score;
+      changePlayerColor(block.style.backgroundColor);
+      clearInterval(fallInterval);
+      block.remove();
+    }
+  }, 20);
+}
+
+function checkCollision(block) {
+  const blockRect = block.getBoundingClientRect();
+  const playerRect = player.getBoundingClientRect();
+
+  return !(blockRect.bottom < playerRect.top || 
+           blockRect.top > playerRect.bottom || 
+           blockRect.right < playerRect.left || 
+           blockRect.left > playerRect.right);
+}
+
+function changePlayerColor(color) {
+  if (playerColor !== color) {
+    player.style.backgroundColor = color;
+    playerColor = color;
+  }
+}
+
+function gameLoop() {
+  if (score >= 10) {
+    clearInterval(gameInterval);
+    clearInterval(blockInterval);
+    gameOverDisplay.style.display = 'block';
+    gameOverDisplay.textContent = `You Win! Score: ${score}`;
+  }
+}
+
+startGame();
